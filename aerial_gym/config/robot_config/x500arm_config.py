@@ -12,17 +12,17 @@ from aerial_gym.config.sensor_config.lidar_config.osdome_64_config import OSDome
 from aerial_gym.config.sensor_config.imu_config.base_imu_config import BaseImuConfig
 
 
-class X500Cfg:
+class X500ArmCfg:
 
     class init_config:
         # init_state tensor is of the format [ratio_x, ratio_y, ratio_z, roll_radians, pitch_radians, yaw_radians, 1.0 (for maintaining shape), vx, vy, vz, wx, wy, wz]
         min_init_state = [
-            0.0,
-            0.0,
-            0.0,
+            0,
+            0,
+            0.25,
             -np.pi / 6,
             -np.pi / 6,
-            -np.pi,
+            -np.pi / 2,
             1.0,
             -0.5,
             -0.5,
@@ -37,7 +37,7 @@ class X500Cfg:
             1.0,
             np.pi / 6,
             np.pi / 6,
-            np.pi,
+            np.pi / 2,
             1.0,
             0.5,
             0.5,
@@ -57,6 +57,53 @@ class X500Cfg:
         enable_imu = False
         imu_config = BaseImuConfig
 
+    class reconfiguration_config:
+        num_dofs = 2 
+        
+        # Use "effort" if you want to use the Python PD controller we just wrote.
+        # Use "position" if you want Nvidia PhysX to handle it (often stiffer/stable).
+        dof_mode = "position" 
+        
+        # Initialization ranges (Required by BaseReconfigurable)
+        # 2 joints, so we need lists of length 2
+        init_state_min = [
+            [0.0, 0.0], # Position (Radians)
+            [0.0, 0.0], # Velocity (Rad/s)
+        ]
+
+        init_state_max = [
+            [0.0, 0.0], # Position
+            [0.0, 0.0], # Velocity
+        ]
+
+        # Gains for the Python PD Controller
+        # stiffness = [10.0, 10.0]  # P Gain
+        # damping = [0.5, 0.5]      # D Gain
+
+        stiffness = [20.0, 20.0]  # Lower from 80.0
+        damping = [2.0, 2.0]    # Lower from 2.0
+        
+        # Physical Limits (Optional, used if we add clamping logic later)
+        max_effort = [10.0, 10.0] 
+        max_velocity = [5.0, 5.0]
+
+    class lee_rates_controller_config:
+        # P-Gains for [Roll, Pitch, Yaw] rates
+        # Tune these: Higher = snappier, Lower = smoother
+        K_angvel_tensor_max = [8.0, 8.0, 4.0]
+        K_angvel_tensor_min = [8.0, 8.0, 4.0]
+        
+        # Unused gains (required by parent class)
+        K_pos_tensor_min = [0.0, 0.0, 0.0]
+        K_pos_tensor_max = [0.0, 0.0, 0.0]
+        K_vel_tensor_min = [0.0, 0.0, 0.0]
+        K_vel_tensor_max = [0.0, 0.0, 0.0]
+        K_rot_tensor_min = [0.0, 0.0, 0.0]
+        K_rot_tensor_max = [0.0, 0.0, 0.0]
+        
+        randomize_params = False
+        max_yaw_rate = 10
+
     class disturbance:
         enable_disturbance = False
         prob_apply_disturbance = 0.00
@@ -69,18 +116,19 @@ class X500Cfg:
         angular_quadratic_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
 
     class robot_asset:
-        asset_folder = f"{AERIAL_GYM_DIRECTORY}/resources/robots/x500"
+        # UPDATED PATH for the new robot
+        asset_folder = f"{AERIAL_GYM_DIRECTORY}/resources/robots/x500arm"
         file = "model.urdf"
-        name = "base_quadrotor"  # actor name
+        name = "x500arm"  # actor name
         base_link_name = "base_link"
         disable_gravity = False
-        collapse_fixed_joints = False  # merge bodies connected by fixed joints.
+        collapse_fixed_joints = False #False  # merge bodies connected by fixed joints.
         fix_base_link = False  # fix the base of the robot
-        collision_mask = 1  # 1 to disable, 0 to enable...bitwise filter
+        collision_mask = 0  # 1 to disable, 0 to enable...bitwise filter
         replace_cylinder_with_capsule = False  # replace collision cylinders with capsules, leads to faster/more stable simulation
         flip_visual_attachments = True  # Some .obj meshes must be flipped from y-up to z-up
         density = 0.000001
-        angular_damping = 0.02
+        angular_damping = 0.02  #differnet from aerodynamic drag, this is the internal damping of the robot's links, not related to velocity
         linear_damping = 0.02
         max_angular_velocity = 100.0
         max_linear_velocity = 100.0
@@ -145,33 +193,55 @@ class X500Cfg:
 
         use_collision_mesh_instead_of_visual = False  # does nothing for the robot
 
-    class lee_rates_controller_config:
-        K_angvel_tensor_max = [10.0, 10.0, 5.0] 
-        K_angvel_tensor_min = [10.0, 10.0, 5.0]
-        K_pos_tensor_min = [0.0, 0.0, 0.0]
-        K_pos_tensor_max = [0.0, 0.0, 0.0]
-        K_vel_tensor_min = [0.0, 0.0, 0.0]
-        K_vel_tensor_max = [0.0, 0.0, 0.0]
-        K_rot_tensor_min = [0.0, 0.0, 0.0]
-        K_rot_tensor_max = [0.0, 0.0, 0.0]
-        randomize_params = False
-        max_yaw_rate = 5.0
-
     class control_allocator_config:
         num_motors = 4
-        force_application_level = "motor_link"  # "motor_link" or "root_link" decides to apply combined forces acting on the robot at the root link or at the individual motor links
+        force_application_level = "root_link" #"motor_link"  # "motor_link" or "root_link" decides to apply combined forces acting on the robot at the root link or at the individual motor links
 
-        application_mask = [4, 1, 3, 2] # front right, back_left, front_left, back_right
-        motor_directions = [1, 1, -1, -1]
+        application_mask = [0, 1, 2, 3]
+        
+        # 2. Set Spin Directions [FR, BR, BL, FL]
+        # 1 = CCW, -1 = CW. 
+        # Standard X-Quad: Diagonals spin same way. Adjacent spin opposite.
+        motor_directions = [1, -1, 1, -1]
 
+        # 3. Allocation Matrix [Fx, Fy, Fz, Tx, Ty, Tz]
+        # Cols: [Front_Right, Back_Right, Back_Left, Front_Left]
         allocation_matrix = [
+            # Fx (None)
             [0.0, 0.0, 0.0, 0.0],
+            # Fy (None)
             [0.0, 0.0, 0.0, 0.0],
+            # Fz (Thrust - All Up)
             [1.0, 1.0, 1.0, 1.0],
-            [-0.13, 0.13, 0.13, -0.13],
-            [-0.13, 0.13, -0.13, 0.13],
-            [-0.025, 0.025, -0.025, 0.025],
+            # Tx (Roll - Right is Neg, Left is Pos)
+            [-0.174, -0.174, 0.174, 0.174],
+            # Ty (Pitch - Front is Neg, Back is Pos)
+            [-0.174, 0.174, 0.174, -0.174],
+            # Tz (Yaw - CCW props Pos, CW props Neg)
+            # Assuming torque coeff = 0.025
+            [0.025, -0.025, 0.025, -0.025],
         ]
+
+        # application_mask = [4, 1, 3, 2] # front right, back_left, front_left, back_right
+        # motor_directions = [1, 1, -1, -1]
+
+        # allocation_matrix = [
+        #     [0.0, 0.0, 0.0, 0.0],
+        #     [0.0, 0.0, 0.0, 0.0],
+        #     [1.0, 1.0, 1.0, 1.0],
+        #     [-0.13, 0.13, 0.13, -0.13],
+        #     [-0.13, 0.13, -0.13, 0.13],
+        #     [-0.025, 0.025, -0.025, 0.025],
+        # ]
+
+        # allocation_matrix = [
+        #     [0.0, 0.0, 0.0, 0.0],
+        #     [0.0, 0.0, 0.0, 0.0],
+        #     [1.0, 1.0, 1.0, 1.0],
+        #     [0.13, -0.13, 0.13, -0.13],
+        #     [-0.13, -0.13, 0.13, 0.13],
+        #     [0.025, -0.025, -0.025, 0.025],
+        # ]
 
         class motor_model_config:
             use_rps = True

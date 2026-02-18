@@ -22,7 +22,11 @@ class LeeRatesController(BaseLeeController):
         """
         self.reset_commands()
         # quaternion desired
-        self.wrench_command[:, 2] = (command_actions[:, 0] - self.gravity) * self.mass
+        # print("COMMAND ACTIONS"+str(command_actions.shape))
+        # print("GRAVITY"+str(self.gravity[0]))
+        # print("Debug MASS"+str(self.mass[0]))
+        mass = self.mass.squeeze()
+        self.wrench_command[:, 2] = (command_actions[:, 0] - self.gravity[:, 2]) * mass
         self.wrench_command[:, 3:6] = self.compute_body_torque(
             self.robot_orientation, command_actions[:, 1:4]
         )

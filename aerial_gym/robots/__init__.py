@@ -16,6 +16,7 @@ from aerial_gym.config.robot_config.snakey_config import SnakeyCfg
 from aerial_gym.config.robot_config.snakey5_config import Snakey5Cfg
 from aerial_gym.config.robot_config.snakey6_config import Snakey6Cfg
 from aerial_gym.config.robot_config.tinyprop_config import TinyPropCfg
+from aerial_gym.config.robot_config.x500arm_config import X500ArmCfg
 
 from aerial_gym.config.robot_config.lmf2_config import LMF2Cfg
 
@@ -24,6 +25,7 @@ from aerial_gym.robots.base_multirotor import BaseMultirotor
 from aerial_gym.robots.base_rov import BaseROV
 from aerial_gym.robots.base_reconfigurable import BaseReconfigurable
 from aerial_gym.robots.morphy import Morphy
+from aerial_gym.robots.x500arm import X500Arm
 
 # get robot registry
 from aerial_gym.registry.robot_registry import robot_registry
@@ -47,6 +49,8 @@ robot_registry.register("base_rov", BaseROV, BaseROVCfg)
 robot_registry.register("lmf1", BaseMultirotor, LMF1Cfg)
 robot_registry.register("lmf2", BaseMultirotor, LMF2Cfg)
 robot_registry.register("x500", BaseMultirotor, X500Cfg)
+
+robot_registry.register("x500arm", X500Arm, X500ArmCfg)
 
 robot_registry.register("tinyprop", BaseMultirotor, TinyPropCfg)
 

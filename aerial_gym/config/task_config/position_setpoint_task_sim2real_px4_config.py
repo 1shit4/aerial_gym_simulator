@@ -8,7 +8,7 @@ if EVAL == False:
         sim_name = "base_sim"
         env_name = "empty_env"
         robot_name = "x500"
-        controller_name = "no_control"
+        controller_name = "lee_rates_control"
         args = {}
         num_envs = 24
         use_warp = False
@@ -22,9 +22,11 @@ if EVAL == False:
         reward_parameters = { }
         crash_dist = 6.5
 
-        action_limit_max = torch.ones(action_space_dim,device=device) * 8.0
-        action_limit_min = torch.ones(action_space_dim,device=device) * 0.0
+        # action_limit_max = torch.ones(action_space_dim,device=device) * 8.0
+        # action_limit_min = torch.ones(action_space_dim,device=device) * 0.0
 
+        action_limit_max = torch.tensor([15.0, 3.14, 3.14, 3.14], device="cuda:0", dtype=torch.float32)
+        action_limit_min = torch.tensor([-9.8, -3.14, -3.14, -3.14], device="cuda:0", dtype=torch.float32)
         def process_actions_for_task(actions, min_limit, max_limit):
             actions_clipped = torch.clamp(actions, -1, 1)
 
@@ -52,8 +54,11 @@ else:
 
         crash_dist = 5.5
 
-        action_limit_max = torch.ones(action_space_dim,device=device) * 8.0
-        action_limit_min = torch.ones(action_space_dim,device=device) * 0.0
+        # action_limit_max = torch.ones(action_space_dim,device=device) * 8.0
+        # action_limit_min = torch.ones(action_space_dim,device=device) * 0.0
+
+        action_limit_max = torch.tensor([15.0, 3.14, 3.14, 3.14], device="cuda:0", dtype=torch.float32)
+        action_limit_min = torch.tensor([-9.8, -3.14, -3.14, -3.14], device="cuda:0", dtype=torch.float32)
 
         def process_actions_for_task(actions, min_limit, max_limit):
             actions_clipped = torch.clamp(actions, -1, 1)
