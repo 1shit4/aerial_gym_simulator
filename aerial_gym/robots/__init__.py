@@ -50,7 +50,9 @@ robot_registry.register("lmf1", BaseMultirotor, LMF1Cfg)
 robot_registry.register("lmf2", BaseMultirotor, LMF2Cfg)
 robot_registry.register("x500", BaseMultirotor, X500Cfg)
 
-robot_registry.register("x500arm", X500Arm, X500ArmCfg)
+# robot_registry.register("x500arm", X500Arm, X500ArmCfg)
+robot_registry.register("x500arm", BaseReconfigurable, X500ArmCfg)
+
 
 robot_registry.register("tinyprop", BaseMultirotor, TinyPropCfg)
 

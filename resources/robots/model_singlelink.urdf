@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<robot name="quadrotor_with_arm">
+
+  <!-- ========================================== -->
+  <!--           X500 DRONE DESCRIPTION           -->
+  <!-- ========================================== -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.0"/>
+      <geometry>
+        <box size="0.4 0.4 0.025"/>
+      </geometry>
+      <material name="White">
+        <color rgba="1 1 1 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.4 0.4 0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.4"/>
+      <inertia ixx="0.0139" ixy="0.0" ixz="0.0" iyy="0.0139" iyz="0.0" izz="0.0246"/>
+    </inertial>
+  </link>
+
+  <!-- PROPS (Standard X500 Setup) -->
+  <link name="front_right_prop">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry> <cylinder radius="0.05" length="0.07"/> </geometry>
+      <material name="Orange"> <color rgba="1.0 0.423 0.0392 1.0"/> </material>
+    </visual>
+    <inertial>
+      <mass value="0.064"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_link_to_front_right_prop" type="fixed" dont_collapse="true">
+    <parent link="base_link"/> <child link="front_right_prop"/> <origin xyz="0.174 -0.174 0"/>
+  </joint>
+
+  <link name="back_right_prop">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry> <cylinder radius="0.05" length="0.07"/> </geometry>
+      <material name="Blue"> <color rgba="0 0 1 1.0"/> </material>
+    </visual>
+    <inertial>
+      <mass value="0.064"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_link_to_back_right_prop" type="fixed" dont_collapse="true">
+    <parent link="base_link"/> <child link="back_right_prop"/> <origin xyz="-0.174 -0.174 0"/>
+  </joint>
+
+  <link name="back_left_prop">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry> <cylinder radius="0.05" length="0.07"/> </geometry>
+      <material name="Blue"> <color rgba="0 0 1 1.0"/> </material>
+    </visual>
+    <inertial>
+      <mass value="0.064"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_link_to_back_left_prop" type="fixed" dont_collapse="true">
+    <parent link="base_link"/> <child link="back_left_prop"/> <origin xyz="-0.174 0.174 0"/>
+  </joint>
+
+  <link name="front_left_prop">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry> <cylinder radius="0.05" length="0.07"/> </geometry>
+      <material name="Orange"> <color rgba="1 0.423 0.039 1.0"/> </material>
+    </visual>
+    <inertial>
+      <mass value="0.064"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_link_to_front_left_prop" type="fixed" dont_collapse="true">
+    <parent link="base_link"/> <child link="front_left_prop"/> <origin xyz="0.174 0.174 0"/>
+  </joint>
+
+  <!-- ========================================== -->
+  <!--           ARM MOUNT (12cm Down)            -->
+  <!-- ========================================== -->
+
+  <joint name="mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="arm_base_link"/>
+    <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- The Fixed Base of the Arm (Attached to Drone) -->
+  <link name="arm_base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.10" />
+      <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry> <cylinder length="0.04" radius="0.04"/> </geometry>
+      <material name="arm_base_material"> <color rgba="0.75 0.75 0.75 1" /> </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry> <cylinder length="0.04" radius="0.04"/> </geometry>
+    </collision>
+  </link>
+
+  <!-- ========================================== -->
+  <!--        JOINT 1: SHOULDER SWING             -->
+  <!--        Moves arm Left/Right (Y-Z plane)    -->
+  <!-- ========================================== -->
+
+  <joint name="joint_1" type="continuous">
+    <origin xyz="0 0 0.0" rpy="0 0 0" />
+    <parent link="arm_base_link" />
+    <child link="arm_link_1" />
+    <!-- Axis -1 0 0 means rotating +theta moves arm towards -Y -->
+    <axis xyz="-1 0 0" />
+    <limit lower="-1.57" upper="1.57" effort="50" velocity="10" />
+  </joint>
+
+  <!-- LINK 1: The "Elbow/Hub" -->
+  <link name="arm_link_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.02" />
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry> <box size="0.03 0.03 0.03"/> </geometry>
+      <material name="link1_material"> <color rgba="0.2 0.2 0.2 1" /> </material>
+    </visual>
+  </link>
+
+  <!-- ========================================== -->
+  <!--        JOINT 2: AXIAL TWIST                -->
+  <!--        Rotates the arm around its own axis -->
+  <!-- ========================================== -->
+
+  <joint name="joint_2" type="continuous">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="arm_link_1" />
+    <child link="arm_link_2" />
+    <!-- Axis Z (0 0 1) points down the arm length -->
+    <axis xyz="0 0 1" />
+    <limit lower="-3.14" upper="3.14" effort="50" velocity="10" />
+  </joint>
+
+  <!-- LINK 2: The Main Arm Link (0.25m Length) -->
+  <link name="arm_link_2">
+    <inertial>
+      <!-- CoM is halfway down the 0.25m arm -->
+      <origin xyz="0 0 -0.125" rpy="0 0 0" />
+      <mass value="0.2" />
+      <!-- Cylindrical Inertia: m=0.2, r=0.025, h=0.25 -->
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.0001" />
+    </inertial>
+    <visual>
+      <!-- Visual offset so it starts at joint and goes down -->
+      <origin xyz="0 0 -0.125" rpy="0 0 0" />
+      <geometry>
+         <cylinder length="0.25" radius="0.025"/>
+      </geometry>
+      <material name="link2_material"> <color rgba="0.7 0.7 0.7 1" /> </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.125" rpy="0 0 0" />
+      <geometry>
+         <cylinder length="0.25" radius="0.025"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

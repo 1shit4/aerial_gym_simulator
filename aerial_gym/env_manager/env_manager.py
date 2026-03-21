@@ -129,6 +129,7 @@ class EnvManager(BaseManager):
         This function populates the environment with the necessary assets and robots.
         """
         # create the simulation instance with the environment and robot manager
+        # print(f"[SIM DT] : {sim_cfg.sim.dt}")
         self.create_sim(env_cfg, sim_cfg)
 
         self.robot_manager.create_robot(self.asset_loader)

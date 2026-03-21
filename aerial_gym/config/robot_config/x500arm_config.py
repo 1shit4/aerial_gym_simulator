@@ -22,7 +22,7 @@ class X500ArmCfg:
             0.25,
             -np.pi / 6,
             -np.pi / 6,
-            -np.pi / 2,
+            -np.pi,
             1.0,
             -0.5,
             -0.5,
@@ -37,7 +37,7 @@ class X500ArmCfg:
             1.0,
             np.pi / 6,
             np.pi / 6,
-            np.pi / 2,
+            np.pi,
             1.0,
             0.5,
             0.5,
@@ -46,6 +46,37 @@ class X500ArmCfg:
             0.2,
             0.2,
         ]
+
+        # min_init_state = [
+        #     0,
+        #     0,
+        #     0.25,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     1.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        # ]
+        # max_init_state = [
+        #     1.0,
+        #     1.0,
+        #     1.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     1.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        #     0.0,
+        # ]
 
     class sensor_config:
         enable_camera = False
@@ -58,40 +89,50 @@ class X500ArmCfg:
         imu_config = BaseImuConfig
 
     class reconfiguration_config:
-        num_dofs = 2 
+        num_dofs = 3 
         
         # Use "effort" if you want to use the Python PD controller we just wrote.
         # Use "position" if you want Nvidia PhysX to handle it (often stiffer/stable).
-        dof_mode = "position" 
+        dof_mode = "effort" 
         
         # Initialization ranges (Required by BaseReconfigurable)
         # 2 joints, so we need lists of length 2
         init_state_min = [
-            [0.0, 0.0], # Position (Radians)
-            [0.0, 0.0], # Velocity (Rad/s)
+            [-3.04, -2.094, -3.14], # Position (Radians)
+            [0.0, 0.0, 0.0], # Velocity (Rad/s)
         ]
 
         init_state_max = [
-            [0.0, 0.0], # Position
-            [0.0, 0.0], # Velocity
+            [-0.1, 2.094, 3.14], # Position
+            [0.0, 0.0, 0.0], # Velocity
         ]
 
-        # Gains for the Python PD Controller
-        # stiffness = [10.0, 10.0]  # P Gain
-        # damping = [0.5, 0.5]      # D Gain
+        # Gains for the Python PD Controller: DONT TOUCH
+        # stiffness = [12.0, 5.0, 2.0] 
+        # damping = [0.5, 0.05, 0.05]
 
-        stiffness = [20.0, 20.0]  # Lower from 80.0
-        damping = [2.0, 2.0]    # Lower from 2.0
+        # max_stiffness = [200.0, 120.0, 15.0]
+        # max_stiffness = [50.0, 30.0, 10.0]
+        max_stiffness = [8.0, 4.0, 2.0]
+        min_stiffness = [8.0, 4.0, 2.0]
+
+        damping = [0.5, 0.05, 0.05]    # Lower from 2.0   [2.0, 0.5] 
+        ##intentionlly leaving delay to match gz deployment, stiffness can be increased firther to reachthe target quickly
         
         # Physical Limits (Optional, used if we add clamping logic later)
-        max_effort = [10.0, 10.0] 
-        max_velocity = [5.0, 5.0]
+        max_effort = [100.0, 100.0, 100.0] 
+        max_velocity = [1.0, 1.0, 1.0]
 
     class lee_rates_controller_config:
         # P-Gains for [Roll, Pitch, Yaw] rates
         # Tune these: Higher = snappier, Lower = smoother
-        K_angvel_tensor_max = [8.0, 8.0, 4.0]
-        K_angvel_tensor_min = [8.0, 8.0, 4.0]
+        # K_angvel_tensor_max = [8.0, 8.0, 4.0]
+        # K_angvel_tensor_min = [8.0, 8.0, 4.0]
+
+        #========THESE R NOT EVEN BEING USED=========#
+
+        K_angvel_tensor_max = [100.0, 100.0, 100.0]
+        K_angvel_tensor_min = [100.0, 100.0, 100.0]
         
         # Unused gains (required by parent class)
         K_pos_tensor_min = [0.0, 0.0, 0.0]
@@ -105,15 +146,15 @@ class X500ArmCfg:
         max_yaw_rate = 10
 
     class disturbance:
-        enable_disturbance = False
-        prob_apply_disturbance = 0.00
-        max_force_and_torque_disturbance = [0, 0, 0, 0, 0, 0]  # [fx, fy, fz, tx, ty, tz]
+        enable_disturbance = True
+        prob_apply_disturbance = 0.01
+        max_force_and_torque_disturbance = [2.5, 2.5, 1.0, 0.1, 0.1, 0.05]  # [fx, fy, fz, tx, ty, tz]
 
     class damping:
-        linvel_linear_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        linvel_quadratic_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        angular_linear_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        angular_quadratic_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
+        linvel_linear_damping_coefficient = [0.1, 0.1, 0.1]  # along the body [x, y, z] axes
+        linvel_quadratic_damping_coefficient = [0.3, 0.3, 0.5]  # along the body [x, y, z] axes
+        angular_linear_damping_coefficient = [0.01, 0.01, 0.01]  # along the body [x, y, z] axes
+        angular_quadratic_damping_coefficient = [0.01, 0.01, 0.01]  # along the body [x, y, z] axes
 
     class robot_asset:
         # UPDATED PATH for the new robot
@@ -121,15 +162,15 @@ class X500ArmCfg:
         file = "model.urdf"
         name = "x500arm"  # actor name
         base_link_name = "base_link"
-        disable_gravity = False
+        disable_gravity =  False
         collapse_fixed_joints = False #False  # merge bodies connected by fixed joints.
         fix_base_link = False  # fix the base of the robot
         collision_mask = 0  # 1 to disable, 0 to enable...bitwise filter
         replace_cylinder_with_capsule = False  # replace collision cylinders with capsules, leads to faster/more stable simulation
         flip_visual_attachments = True  # Some .obj meshes must be flipped from y-up to z-up
         density = 0.000001
-        angular_damping = 0.02  #differnet from aerodynamic drag, this is the internal damping of the robot's links, not related to velocity
-        linear_damping = 0.02
+        angular_damping = 0.02 #2.0 #differnet from aerodynamic drag, this is the internal damping of the robot's links, not related to velocity
+        linear_damping = 0.02 #0.02
         max_angular_velocity = 100.0
         max_linear_velocity = 100.0
         armature = 0.00001

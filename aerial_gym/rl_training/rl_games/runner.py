@@ -17,6 +17,7 @@ from rl_games.common import env_configurations, vecenv
 
 import torch
 import distutils
+from observer import RewardObserver
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 # import warnings
@@ -32,6 +33,7 @@ class ExtractObsWrapper(gym.Wrapper):
         return observations["observations"]
 
     def step(self, action):
+        # print("HEPlo")
         observations, rewards, terminated, truncated, infos = super().step(action)
 
         dones = torch.where(
@@ -328,6 +330,7 @@ if __name__ == "__main__":
         from rl_games.torch_runner import Runner
 
         runner = Runner()
+        runner.algo_observer = RewardObserver()
         try:
             runner.load(config)
         except yaml.YAMLError as exc:

@@ -22,7 +22,8 @@ class LeeAttitudeController(BaseLeeController):
         """
         self.reset_commands()
         self.wrench_command[:, 2] = (
-            (command_actions[:, 0] + 1.0) * self.mass.squeeze(1) * torch.norm(self.gravity, dim=1)
+            (command_actions[:, 0] - self.gravity[:, 2]) * self.mass.squeeze()
+            # (command_actions[:, 0] + 1.0) * self.mass.squeeze(1) * torch.norm(self.gravity, dim=1)
         )
 
         self.euler_angle_rates[:, :2] = 0.0

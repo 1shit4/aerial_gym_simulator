@@ -162,6 +162,7 @@ class PositionSetpointTaskSim2RealPX4(BaseTask):
         self.action_history[:, :self.task_config.action_space_dim] = actions
 
     def step(self, actions):
+        # print("HEPPPP   ")
         self.counter += 1
         self.actions = self.task_config.process_actions_for_task(
             actions, self.task_config.action_limit_min, self.task_config.action_limit_max
@@ -304,6 +305,30 @@ def compute_reward(
     action_difference_penalty = torch.sum(exp_penalty_func(action_difference, 0.5, 6.0), dim=1)
 
     reward = towards_goal_reward + (pos_reward * (alignment_reward + vel_reward + angvel_reward + action_difference_penalty) + (angvel_reward + vel_reward + upright_reward + pos_reward + action_cost)) / 100.0
+    i = 0
+    # print("\n===== REWARD BREAKDOWN =====")
+    # print(f"towards_goal_reward     : mean={towards_goal_reward.mean():.4f}, sample={towards_goal_reward[i]:.4f}")
+
+    # print(f"pos_reward              : mean={pos_reward.mean():.4f}, sample={pos_reward[i]:.4f}")
+    # print(f"alignment_reward        : mean={alignment_reward.mean():.4f}, sample={alignment_reward[i]:.4f}")
+    # print(f"vel_reward              : mean={vel_reward.mean():.4f}, sample={vel_reward[i]:.4f}")
+    # print(f"angvel_reward           : mean={angvel_reward.mean():.4f}, sample={angvel_reward[i]:.4f}")
+    # print(f"upright_reward          : mean={upright_reward.mean():.4f}, sample={upright_reward[i]:.4f}")
+
+    # print(f"action_cost             : mean={action_cost.mean():.4f}, sample={action_cost[i]:.4f}")
+    # print(f"action_diff_penalty     : mean={action_difference_penalty.mean():.4f}, sample={action_difference_penalty[i]:.4f}")
+    # # print(f"angvel_penalty          : mean={angvel_penalty.mean():.4f}, sample={angvel_penalty[i]:.4f}")
+
+    # combined_inner = (
+    #     pos_reward * (alignment_reward + vel_reward + angvel_reward + action_difference_penalty)
+    #     + (angvel_reward + vel_reward + upright_reward + pos_reward + action_cost)
+    # ) / 100.0
+
+    # print(f"inner_term (/100)       : mean={combined_inner.mean():.4f}, sample={combined_inner[i]:.4f}")
+
+    # total_reward = towards_goal_reward + combined_inner
+    # print(f"TOTAL REWARD            : mean={total_reward.mean():.4f}, sample={total_reward[i]:.4f}")
+    # print("===========================\n")
 
     crashes[:] = torch.where(target_dist > crash_dist, torch.ones_like(crashes), crashes)
 

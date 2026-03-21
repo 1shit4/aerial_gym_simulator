@@ -204,3 +204,19 @@ def euler_rates_to_body_rates(robot_euler_angles, desired_euler_rates, rotmat_eu
     rotmat_euler_to_body_rates[:, 2, 2] = c_roll * c_pitch
 
     return torch.bmm(rotmat_euler_to_body_rates, desired_euler_rates.unsqueeze(2)).squeeze(2)
+
+@torch.jit.script
+def extract_vee_map(matrix):
+    # Extracts the vee map from a batched 3x3 skew-symmetric matrix: shape (num_envs, 3, 3)
+    # vee(M) = [M(2,1), M(0,2), M(1,0)]^T
+    v_x = matrix[:, 2, 1]
+    v_y = matrix[:, 0, 2]
+    v_z = matrix[:, 1, 0]
+    return torch.stack((v_x, v_y, v_z), dim=1)
+
+@torch.jit.script
+def asmc_sigmoid(s, v: float):
+    # Vectorized sigmoid function matching your C++ logic
+    abs_s = torch.abs(s)
+    mask = abs_s > v
+    return torch.where(mask, torch.sign(s), s / v)

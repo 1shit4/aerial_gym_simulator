@@ -28,13 +28,29 @@ class BaseReconfigurable(BaseMultirotor):
         self.init_joint_response_params(self.cfg)
 
     def init_joint_response_params(self, cfg):
-        self.joint_stiffness = torch.tensor(
-            cfg.reconfiguration_config.stiffness, device=self.device, dtype=torch.float32
+        self.joint_stiffness_min = torch.tensor(
+            self.cfg.reconfiguration_config.min_stiffness, device=self.device, dtype=torch.float32
         ).expand(self.num_envs, -1)
+        
+        self.joint_stiffness_max = torch.tensor(
+            self.cfg.reconfiguration_config.max_stiffness, device=self.device, dtype=torch.float32
+        ).expand(self.num_envs, -1)
+        
+        self.joint_stiffness = torch.zeros((self.num_envs, cfg.reconfiguration_config.num_dofs), device=self.device, dtype=torch.float32)
 
         self.joint_damping = torch.tensor(
             cfg.reconfiguration_config.damping, device=self.device, dtype=torch.float32
         ).expand(self.num_envs, -1)
+
+        # self.joint_damping_min = torch.tensor(
+        #     cfg.reconfiguration_config.min_damping, device=self.device, dtype=torch.float32
+        # ).expand(self.num_envs, -1)
+        
+        # self.joint_damping_max = torch.tensor(
+        #     cfg.reconfiguration_config.max_damping, device=self.device, dtype=torch.float32
+        # ).expand(self.num_envs, -1)
+
+        # self.joint_damping = torch.zeros((self.num_envs, cfg.reconfiguration_config.num_dofs), device=self.device, dtype=torch.float32)
 
     def init_tensors(self, global_tensor_dict):
         super().init_tensors(global_tensor_dict)
@@ -58,6 +74,24 @@ class BaseReconfigurable(BaseMultirotor):
             lower=self.joint_init_state_min[env_ids],
             upper=self.joint_init_state_max[env_ids],
         )
+
+        self.randomize_joint_params(env_ids)
+
+    def randomize_joint_params(self, env_ids):
+        """
+        Generates new random stiffness and damping values for the specified environments.
+        """
+        num_resets = len(env_ids)
+        if num_resets == 0:
+            return
+
+        # Generate random numbers between 0 and 1
+        rand_stiffness = torch.rand((num_resets, self.joint_stiffness.shape[1]), device=self.device)
+        # rand_damping = torch.rand((num_resets, self.joint_damping.shape[1]), device=self.device)
+
+        # Scale to[min, max] using formula: rand * (max - min) + min
+        self.joint_stiffness[env_ids] = rand_stiffness * (self.joint_stiffness_max[env_ids] - self.joint_stiffness_min[env_ids]) + self.joint_stiffness_min[env_ids]
+        # self.joint_damping[env_ids] = rand_damping * (self.joint_damping_max[env_ids] - self.joint_damping_min[env_ids]) + self.joint_damping_min[env_ids]
 
     def call_arm_controller(self):
         """
