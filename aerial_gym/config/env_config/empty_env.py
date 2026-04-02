@@ -9,7 +9,7 @@ class EmptyEnvCfg:
         # and some of them may be used to control various entities in the environment
         # e.g. motion of obstacles, etc.
         env_spacing = 1.0  # not used with heightfields/trimeshes
-        num_physics_steps_per_env_step_mean = 5  # number of steps between camera renders mean
+        num_physics_steps_per_env_step_mean = 2  # number of steps between camera renders mean
         num_physics_steps_per_env_step_std = 0  # number of steps between camera renders std
         render_viewer_every_n_steps = 5  # render the viewer every n steps
         collision_force_threshold = 0.010  # collision force threshold

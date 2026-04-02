@@ -58,15 +58,15 @@ class X500Cfg:
         imu_config = BaseImuConfig
 
     class disturbance:
-        enable_disturbance = False
-        prob_apply_disturbance = 0.00
-        max_force_and_torque_disturbance = [0, 0, 0, 0, 0, 0]  # [fx, fy, fz, tx, ty, tz]
+        enable_disturbance = True
+        prob_apply_disturbance = 0.01
+        max_force_and_torque_disturbance = [2.5, 2.5, 1.0, 0.1, 0.1, 0.05]  # [fx, fy, fz, tx, ty, tz]
 
-    class damping:
-        linvel_linear_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        linvel_quadratic_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        angular_linear_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
-        angular_quadratic_damping_coefficient = [0.0, 0.0, 0.0]  # along the body [x, y, z] axes
+    class damping: 
+        linvel_linear_damping_coefficient = [0.1, 0.1, 0.1]  # along the body [x, y, z] axes
+        linvel_quadratic_damping_coefficient = [0.3, 0.3, 0.5]  # along the body [x, y, z] axes
+        angular_linear_damping_coefficient = [0.01, 0.01, 0.01]  # along the body [x, y, z] axes
+        angular_quadratic_damping_coefficient = [0.01, 0.01, 0.01]  # along the body [x, y, z] axes
 
     class robot_asset:
         asset_folder = f"{AERIAL_GYM_DIRECTORY}/resources/robots/x500"
@@ -159,7 +159,7 @@ class X500Cfg:
 
     class control_allocator_config:
         num_motors = 4
-        force_application_level = "motor_link"  # "motor_link" or "root_link" decides to apply combined forces acting on the robot at the root link or at the individual motor links
+        force_application_level = "root_link"  # "motor_link" or "root_link" decides to apply combined forces acting on the robot at the root link or at the individual motor links
 
         application_mask = [4, 1, 3, 2] # front right, back_left, front_left, back_right
         motor_directions = [1, 1, -1, -1]

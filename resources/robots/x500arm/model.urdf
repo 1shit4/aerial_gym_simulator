@@ -18,7 +18,8 @@
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.353 0.353 0.05"/>
+        <!-- <box size="0.353 0.353 0.05"/> -->
+        <box size="1.0 1.0 0.05"/>
       </geometry>
     </collision>
     <inertial>

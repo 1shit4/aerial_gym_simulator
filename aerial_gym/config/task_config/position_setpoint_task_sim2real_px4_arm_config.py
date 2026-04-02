@@ -9,9 +9,9 @@ if EVAL == False:
         sim_name = "base_sim_4ms"
         env_name = "empty_env"
         robot_name = "x500arm"       # Must match robot_registry key
-        controller_name = "asmc_control" # Must match controller_registry key
+        controller_name = "il_control" # Must match controller_registry key
         args = {}
-        num_envs = 1
+        num_envs = 2
         use_warp = False
         headless = True
         device = "cuda:0"
@@ -45,28 +45,28 @@ if EVAL == False:
         action_limit_max = torch.tensor(drone_max + arm_max, device=device, dtype=torch.float32)
 
         def process_actions_for_task(actions, min_limit, max_limit):
+            # actions_clipped = torch.clamp(actions, -1, 1)
+            # actions_clipped[:,0] = actions_clipped[:,0]*9.81
+            # actions_clipped[:,1] = actions_clipped[:,1]*9.81
+            # actions_clipped[:,2] = actions_clipped[:,2]*9.81
+            # actions_clipped[:,3] = actions_clipped[:,3]*8.0 #8.0 for rate
+            # actions_clipped[:,4] = actions_clipped[:,4]*8.0 #8.0 for rate
+            # actions_clipped[:,5] = actions_clipped[:,5]*6.0 #np.pi / 3.0  #6.0
+            # actions_clipped[:,6] = actions_clipped[:,6]*np.pi/2 #np.pi / 3.0  #6.0
+            # actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
+            # actions_clipped[:,8] = actions_clipped[:,8]*2.094
+            # actions_clipped[:,9] = actions_clipped[:,9]*3.14
             actions_clipped = torch.clamp(actions, -1, 1)
-            actions_clipped[:,0] = actions_clipped[:,0]*9.81
-            actions_clipped[:,1] = actions_clipped[:,1]*9.81
+            actions_clipped[:,0] = actions_clipped[:,0]*5
+            actions_clipped[:,1] = actions_clipped[:,1]*5
             actions_clipped[:,2] = actions_clipped[:,2]*9.81
-            actions_clipped[:,3] = actions_clipped[:,3]*8.0 #8.0 for rate
-            actions_clipped[:,4] = actions_clipped[:,4]*8.0 #8.0 for rate
-            actions_clipped[:,5] = actions_clipped[:,5]*6.0 #np.pi / 3.0  #6.0
+            actions_clipped[:,3] = actions_clipped[:,3]*5 #8.0 for rate
+            actions_clipped[:,4] = actions_clipped[:,4]*5 #8.0 for rate
+            actions_clipped[:,5] = actions_clipped[:,5]*np.pi/5  #6.0
             actions_clipped[:,6] = actions_clipped[:,6]*np.pi/2 #np.pi / 3.0  #6.0
             actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
             actions_clipped[:,8] = actions_clipped[:,8]*2.094
             actions_clipped[:,9] = actions_clipped[:,9]*3.14
-            # actions_clipped = torch.clamp(actions, -1, 1)
-            # actions_clipped[:,0] = actions_clipped[:,0]*5
-            # actions_clipped[:,1] = actions_clipped[:,1]*5
-            # actions_clipped[:,2] = actions_clipped[:,2]*9.81
-            # actions_clipped[:,3] = actions_clipped[:,3]*2 #8.0 for rate
-            # actions_clipped[:,4] = actions_clipped[:,4]*2 #8.0 for rate
-            # actions_clipped[:,5] = actions_clipped[:,5]*2 #np.pi / 3.0  #6.0
-            # actions_clipped[:,6] = actions_clipped[:,6]*np.pi/6 #np.pi / 3.0  #6.0
-            # actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
-            # actions_clipped[:,8] = actions_clipped[:,8]*2.094
-            # actions_clipped[:,9] = actions_clipped[:,9]*3.14
 
 
             # rescaled_actions = actions_clipped * (max_limit - min_limit)/2 + (max_limit + min_limit)/2
@@ -79,9 +79,9 @@ else:
             sim_name = "base_sim_4ms"
             env_name = "empty_env"
             robot_name = "x500arm"       # Must match robot_registry key
-            controller_name = "asmc_control" # Must match controller_registry key
+            controller_name = "il_control" # Must match controller_registry key
             args = {}
-            num_envs = 1024
+            num_envs = 2
             use_warp = False
             headless = True
             device = "cuda:0"
@@ -115,28 +115,28 @@ else:
             action_limit_max = torch.tensor(drone_max + arm_max, device=device, dtype=torch.float32)
 
             def process_actions_for_task(actions, min_limit, max_limit):
+                # actions_clipped = torch.clamp(actions, -1, 1)
+                # actions_clipped[:,0] = actions_clipped[:,0]*9.81
+                # actions_clipped[:,1] = actions_clipped[:,1]*9.81
+                # actions_clipped[:,2] = actions_clipped[:,2]*9.81
+                # actions_clipped[:,3] = actions_clipped[:,3]*8.0 #8.0 for rate
+                # actions_clipped[:,4] = actions_clipped[:,4]*8.0 #8.0 for rate
+                # actions_clipped[:,5] = actions_clipped[:,5]*6.0 #np.pi / 3.0  #6.0
+                # actions_clipped[:,6] = actions_clipped[:,6]*np.pi/2 #np.pi / 3.0  #6.0
+                # actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
+                # actions_clipped[:,8] = actions_clipped[:,8]*2.094
+                # actions_clipped[:,9] = actions_clipped[:,9]*3.14
                 actions_clipped = torch.clamp(actions, -1, 1)
-                actions_clipped[:,0] = actions_clipped[:,0]*9.81
-                actions_clipped[:,1] = actions_clipped[:,1]*9.81
+                actions_clipped[:,0] = actions_clipped[:,0]*5
+                actions_clipped[:,1] = actions_clipped[:,1]*5
                 actions_clipped[:,2] = actions_clipped[:,2]*9.81
-                actions_clipped[:,3] = actions_clipped[:,3]*8.0 #8.0 for rate
-                actions_clipped[:,4] = actions_clipped[:,4]*8.0 #8.0 for rate
-                actions_clipped[:,5] = actions_clipped[:,5]*6.0 #np.pi / 3.0  #6.0
+                actions_clipped[:,3] = actions_clipped[:,3]*5 #8.0 for rate
+                actions_clipped[:,4] = actions_clipped[:,4]*5 #8.0 for rate
+                actions_clipped[:,5] = actions_clipped[:,5]*np.pi/5  #6.0
                 actions_clipped[:,6] = actions_clipped[:,6]*np.pi/2 #np.pi / 3.0  #6.0
                 actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
                 actions_clipped[:,8] = actions_clipped[:,8]*2.094
                 actions_clipped[:,9] = actions_clipped[:,9]*3.14
-                # actions_clipped = torch.clamp(actions, -1, 1)
-                # actions_clipped[:,0] = actions_clipped[:,0]*5
-                # actions_clipped[:,1] = actions_clipped[:,1]*5
-                # actions_clipped[:,2] = actions_clipped[:,2]*9.81
-                # actions_clipped[:,3] = actions_clipped[:,3]*2 #8.0 for rate
-                # actions_clipped[:,4] = actions_clipped[:,4]*2 #8.0 for rate
-                # actions_clipped[:,5] = actions_clipped[:,5]*2 #np.pi / 3.0  #6.0
-                # actions_clipped[:,6] = actions_clipped[:,6]*np.pi/6 #np.pi / 3.0  #6.0
-                # actions_clipped[:,7] = actions_clipped[:,7]*1.57 -1.57
-                # actions_clipped[:,8] = actions_clipped[:,8]*2.094
-                # actions_clipped[:,9] = actions_clipped[:,9]*3.14
 
                 # print("Actions clipped: ", actions_clipped[0, :])
 

@@ -11,6 +11,8 @@ from aerial_gym.control.controllers.velocity_steeing_angle_controller import (
 from aerial_gym.control.controllers.rates_control import LeeRatesController
 from aerial_gym.control.controllers.no_control import NoControl
 from aerial_gym.control.controllers.asmc import ASMCAttitudeController
+from aerial_gym.control.controllers.il_control import ILAttitudeController
+
 
 
 
@@ -56,6 +58,9 @@ controller_registry.register_controller(
 )
 controller_registry.register_controller(
     "asmc_control", ASMCAttitudeController, lee_controller_config
+)
+controller_registry.register_controller(
+    "il_control", ILAttitudeController, lee_controller_config
 )
 
 

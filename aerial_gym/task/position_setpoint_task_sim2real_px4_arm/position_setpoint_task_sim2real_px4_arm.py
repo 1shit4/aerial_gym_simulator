@@ -1128,8 +1128,9 @@ def compute_reward(
     # print(f"ALIGN R: {alignment_reward}")
 
     #4. drone angvel reward
-    angvels_err[:,2]*=2
+    # angvels_err[:,2]*=2
     angvel_reward = torch.sum(exp_func(angvels_err, 1.5 , 2.0), dim=1)
+    angvel_yaw_reward = exp_func(angvels_err[:,2], 1.5 , 2.0) + exp_func(angvels_err[:,2], 1.5 , 10.0)
     # print(f"ANGVEL E: {angvels_err}")
     # print(f"ANGVEL R: {angvel_reward}")
     #5. drone linvel reward
@@ -1179,6 +1180,8 @@ def compute_reward(
     # action_diff_penalty_drone = exp_penalty_func(action_diff[:, 0], 0.5, 6.0)
     action_diff_penalty_acc = torch.sum(exp_penalty_func(action_diff[:, 0:3], 1.0, 5.0), dim=1)
     action_diff_penalty_rad = torch.sum(exp_penalty_func(action_diff[:, 3:], 1.0, 12.0), dim=1)
+    action_diff_penalty_yaw = exp_penalty_func(action_diff[:, 6], 4.0, 12.0)
+
     # action_diff_penalty_joints = torch.sum(exp_penalty_func(action_diff[:, 7:], 1.0, 2.0), dim=1)
     # print(f"ACTION SMOOTH E: {action_difference}")
     # print(f"ACTION SMOOTH R: {action_difference_penalty}")
@@ -1188,20 +1191,22 @@ def compute_reward(
     # 12. action magnitude reward (penalty)
     # Action space:[0:3] lin acc, [3:6] body rates, [6] yaw, [7:10] joint pos
     
-    # Penalize large linear accelerations
-    action_mag_penalty_acc = torch.sum(exp_penalty_func(action_input[:, 0:3], 2.0, 1.0), dim=1)
+    # Penalize large linear accelerations (only x,y)
+    action_mag_penalty_acc = torch.sum(exp_penalty_func(action_input[:, 0:2], 2.0, 1.0), dim=1)
     
     # Penalize large body rates (often needs a stricter penalty to prevent aggressive spinning)
-    action_mag_penalty_rates = torch.sum(exp_penalty_func(action_input[:, 3:6], 2.0, 5.0), dim=1)
+    # action_input[:,5] = action_input[:,5]*5
+    action_mag_penalty_rates = torch.sum(exp_penalty_func(action_input[:, 3:5], 2.0, 5.0), dim=1)
+    action_mag_penalty_yaw_rate = exp_penalty_func(action_input[:, 5], 2.0, 2.0) + exp_penalty_func(action_input[:, 5], 2.0, 10.0)
     
     # Penalize large yaw commands
     # Note: action_input[:, 6] is a 1D tensor, so no need for torch.sum()
     action_mag_penalty_yaw = exp_penalty_func(action_input[:, 6], 1.0, 5.0)
 
     # Optional: Combine the angular magnitudes for cleaner code in the final equation
-    action_mag_penalty = action_mag_penalty_rates + action_mag_penalty_yaw + action_mag_penalty_acc
+    action_mag_penalty = action_mag_penalty_rates + action_mag_penalty_yaw*0 + action_mag_penalty_acc + action_mag_penalty_yaw_rate
 
-    reward = towards_goal_reward + (pos_reward * (eevel_reward + vel_reward + angvel_reward + jointvel_reward + action_diff_penalty_acc*4 + action_diff_penalty_rad*4 + 5*eeori_reward + action_mag_penalty*2) + (action_mag_penalty*5 + angvel_reward + vel_reward + jointvel_reward + eevel_reward + 15*eeori_reward + upright_reward + 50 * pos_reward + action_diff_penalty_rad*10  + 10*action_diff_penalty_acc)) / 100.0
+    reward = towards_goal_reward + (pos_reward * (eevel_reward + vel_reward*0 + angvel_reward*0 + 0*jointvel_reward + angvel_yaw_reward + action_diff_penalty_acc + action_diff_penalty_rad + action_diff_penalty_yaw + 5*eeori_reward + action_mag_penalty) + (action_mag_penalty + angvel_reward*0 + vel_reward*0 + jointvel_reward*0 + angvel_yaw_reward + eevel_reward + 15*eeori_reward + upright_reward + 50 * pos_reward + action_diff_penalty_rad + action_diff_penalty_yaw + action_diff_penalty_acc)) / 100.0
     
     # reward = towards_goal_reward + (pos_reward * (eevel_reward + vel_reward + angvel_reward + jointvel_reward + action_difference_penalty + 2*eeori_reward + 0*alignment_reward) + (angvel_reward + vel_reward + jointvel_reward + eevel_reward + 12*eeori_reward + alignment_reward*0 + upright_reward + 50 * pos_reward + action_cost)) / 100.0
     # print(f"\nTOTAL REW: {reward}").

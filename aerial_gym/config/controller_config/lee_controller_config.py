@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 
 class control:
@@ -69,3 +70,18 @@ class control:
     asmc_max_torque = 1.0
 
     asmc_alloc_coeffs = [0.2372, 2.5801, 0.2372, -0.1229]
+
+    # IL Control Parameters
+    il_dt = 0.01  # RL control step (e.g., 100Hz = 0.01s, matching simulator rate)
+    
+    # Adaptive Torque Gains (Stored as lists of 3 values since they are diagonal matrices)
+    il_Jbar = [0.06, 0.06, 0.10]
+    il_Kp_eta = [0.8, 0.8, 0.5]
+    il_Kd_eta = [4.0, 4.0, 2.0]
+    il_torque_limits = [3.0, 3.0, 1.5]
+    
+    il_alpha_filter = 0.1
+    
+    # Clamping & Allocation
+    il_max_tilt = 45.0 * math.pi / 180.0
+    il_alloc_coeffs = [0.07258, 0.31935, 0.07258, 0.0]

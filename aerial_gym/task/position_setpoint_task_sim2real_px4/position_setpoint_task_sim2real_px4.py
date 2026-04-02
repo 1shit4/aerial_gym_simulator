@@ -220,10 +220,10 @@ class PositionSetpointTaskSim2RealPX4(BaseTask):
         ang_vel_noise = torch.normal(mean=torch.zeros_like(self.obs_dict["robot_body_angvel"]), std=0.001) * sim_with_noise
         ang_vel_noisy = self.obs_dict["robot_body_angvel"] + ang_vel_noise
 
-        self.task_obs["observations"][:, 0:3] = obs_pos_noisy
+        self.task_obs["observations"][:, 0:3] = obs_pos_noisy/10
         or_matr_with_noise = euler_angles_to_matrix(obs_or_euler_noisy[:, [2, 1, 0]], "ZYX")
         self.task_obs["observations"][:, 3:9] = matrix_to_rotation_6d(or_matr_with_noise)
-        self.task_obs["observations"][:, 9:12] = obs_linvel_noisy
+        self.task_obs["observations"][:, 9:12] = obs_linvel_noisy/10
         self.task_obs["observations"][:, 12:15] = ang_vel_noisy
 
         self.task_obs["rewards"] = self.rewards
@@ -306,29 +306,29 @@ def compute_reward(
 
     reward = towards_goal_reward + (pos_reward * (alignment_reward + vel_reward + angvel_reward + action_difference_penalty) + (angvel_reward + vel_reward + upright_reward + pos_reward + action_cost)) / 100.0
     i = 0
-    # print("\n===== REWARD BREAKDOWN =====")
-    # print(f"towards_goal_reward     : mean={towards_goal_reward.mean():.4f}, sample={towards_goal_reward[i]:.4f}")
+    print("\n===== REWARD BREAKDOWN =====")
+    print(f"towards_goal_reward     : mean={towards_goal_reward.mean():.4f}, sample={towards_goal_reward[i]:.4f}")
 
-    # print(f"pos_reward              : mean={pos_reward.mean():.4f}, sample={pos_reward[i]:.4f}")
-    # print(f"alignment_reward        : mean={alignment_reward.mean():.4f}, sample={alignment_reward[i]:.4f}")
-    # print(f"vel_reward              : mean={vel_reward.mean():.4f}, sample={vel_reward[i]:.4f}")
-    # print(f"angvel_reward           : mean={angvel_reward.mean():.4f}, sample={angvel_reward[i]:.4f}")
-    # print(f"upright_reward          : mean={upright_reward.mean():.4f}, sample={upright_reward[i]:.4f}")
+    print(f"pos_reward              : mean={pos_reward.mean():.4f}, sample={pos_reward[i]:.4f}")
+    print(f"alignment_reward        : mean={alignment_reward.mean():.4f}, sample={alignment_reward[i]:.4f}")
+    print(f"vel_reward              : mean={vel_reward.mean():.4f}, sample={vel_reward[i]:.4f}")
+    print(f"angvel_reward           : mean={angvel_reward.mean():.4f}, sample={angvel_reward[i]:.4f}")
+    print(f"upright_reward          : mean={upright_reward.mean():.4f}, sample={upright_reward[i]:.4f}")
 
-    # print(f"action_cost             : mean={action_cost.mean():.4f}, sample={action_cost[i]:.4f}")
-    # print(f"action_diff_penalty     : mean={action_difference_penalty.mean():.4f}, sample={action_difference_penalty[i]:.4f}")
-    # # print(f"angvel_penalty          : mean={angvel_penalty.mean():.4f}, sample={angvel_penalty[i]:.4f}")
+    print(f"action_cost             : mean={action_cost.mean():.4f}, sample={action_cost[i]:.4f}")
+    print(f"action_diff_penalty     : mean={action_difference_penalty.mean():.4f}, sample={action_difference_penalty[i]:.4f}")
+    # print(f"angvel_penalty          : mean={angvel_penalty.mean():.4f}, sample={angvel_penalty[i]:.4f}")
 
-    # combined_inner = (
-    #     pos_reward * (alignment_reward + vel_reward + angvel_reward + action_difference_penalty)
-    #     + (angvel_reward + vel_reward + upright_reward + pos_reward + action_cost)
-    # ) / 100.0
+    combined_inner = (
+        pos_reward * (alignment_reward + vel_reward + angvel_reward + action_difference_penalty)
+        + (angvel_reward + vel_reward + upright_reward + pos_reward + action_cost)
+    ) / 100.0
 
-    # print(f"inner_term (/100)       : mean={combined_inner.mean():.4f}, sample={combined_inner[i]:.4f}")
+    print(f"inner_term (/100)       : mean={combined_inner.mean():.4f}, sample={combined_inner[i]:.4f}")
 
-    # total_reward = towards_goal_reward + combined_inner
-    # print(f"TOTAL REWARD            : mean={total_reward.mean():.4f}, sample={total_reward[i]:.4f}")
-    # print("===========================\n")
+    total_reward = towards_goal_reward + combined_inner
+    print(f"TOTAL REWARD            : mean={total_reward.mean():.4f}, sample={total_reward[i]:.4f}")
+    print("===========================\n")
 
     crashes[:] = torch.where(target_dist > crash_dist, torch.ones_like(crashes), crashes)
 

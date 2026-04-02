@@ -112,8 +112,8 @@ class X500ArmCfg:
         # damping = [0.5, 0.05, 0.05]
 
         # max_stiffness = [200.0, 120.0, 15.0]
-        # max_stiffness = [50.0, 30.0, 10.0]
-        max_stiffness = [8.0, 4.0, 2.0]
+        max_stiffness = [50.0, 30.0, 10.0]
+        # max_stiffness = [8.0, 4.0, 2.0]
         min_stiffness = [8.0, 4.0, 2.0]
 
         damping = [0.5, 0.05, 0.05]    # Lower from 2.0   [2.0, 0.5] 
