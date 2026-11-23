@@ -1,119 +1,121 @@
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+# Goal-Conditioned Aerial-Manipulator RL in Aerial Gym
 
-# [Aerial Gym Simulator](index.md)
+**Aerial Gym extensions for coordinated quadrotor–arm control, end-effector pose tracking, and controller-in-the-loop reinforcement learning.**
 
-Welcome to the [Aerial Gym Simulator](https://www.github.com/ntnu-arl/aerial_gym_simulator) repository. Please refer to our [documentation](https://ntnu-arl.github.io/aerial_gym_simulator/) for detailed information on how to get started with the simulator, and how to use it for your research.
+This repository is part of the [Robust Goal-Directed Aerial Manipulation project](https://github.com/1shit4/aerial-manipulation-rl-control). The larger research objective is to move an aerial manipulator's end effector toward a target pose while maintaining stable flight despite the coupled motion of the vehicle and arm. This repository implements the **RL simulation and training components** of that investigation.
 
-The Aerial Gym Simulator is a high-fidelity physics-based simulator for training Micro Aerial Vehicle (MAV) platforms such as multirotors to learn to fly and navigate cluttered environments using learning-based methods. The environments are built upon the underlying [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym) simulator. We offer aerial robot models for standard planar quadrotor platforms, as well as fully-actuated platforms and multirotors with arbitrary configurations. These configurations are supported with low-level and high-level geometric controllers that reside on the GPU and provide parallelization for the simultaneous control of thousands of multirotors.
+The code builds on the open-source [Aerial Gym Simulator](https://github.com/ntnu-arl/aerial_gym_simulator), developed at NTNU. The underlying GPU simulation, environment infrastructure, and general-purpose controllers are from Aerial Gym; the work documented here concerns the **X500 aerial-manipulator setup, custom learning tasks, PX4-oriented policy interfaces, and disturbance-compensating controller integrations**.
 
-This is the *second release* of the simulator and includes a variety of new features and improvements. Task definition and environment configuration allow for fine-grained customization of all the environment entities without having to deal with large monolithic environment files. A custom rendering framework allows obtaining depth, and segmentation images at high speeds and can be used to simulate custom sensors such as LiDARs with varying properties. The simulator is open-source and is released under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+## Aerial-Manipulator RL Task
 
+The primary task is [`position_setpoint_task_sim2real_px4_arm`](aerial_gym/task/position_setpoint_task_sim2real_px4_arm/position_setpoint_task_sim2real_px4_arm.py). It uses an X500-style quadrotor with a **three-joint manipulator**, modeled in [`resources/robots/x500arm/`](resources/robots/x500arm/) and configured by [`x500arm_config.py`](aerial_gym/config/robot_config/x500arm_config.py).
 
-Aerial Gym Simulator allows you to train state-based control policies in under a minute:
+The policy receives vehicle and manipulator states together with the end-effector goal. Its actions command **both the quadrotor and the arm**, so the learning objective is end-effector pose tracking rather than simply keeping the flying base at a position setpoint.
 
-![Aerial Gym Simulator](./docs/gifs/Aerial%20Gym%20Position%20Control.gif)
+### Policy observations (33 dimensions)
 
-And train vision-based navigation policies in under an hour:
+| Observation | Dimensions | Description |
+| --- | ---: | --- |
+| Vehicle position relative to goal | 3 | Target position minus vehicle position |
+| Vehicle orientation | 6 | Rotation in 6D representation |
+| Vehicle linear and angular velocities | 6 | Translational velocity and body angular velocity |
+| End-effector position error | 3 | Target position minus computed end-effector position |
+| End-effector orientation error | 9 | Flattened relative rotation matrix |
+| Manipulator joint positions and velocities | 6 | Three joint angles and three joint velocities |
+| **Total** | **33** | |
 
-![RL for Navigation](./docs/gifs/rl_for_navigation_example.gif)
+End-effector position, orientation, and velocity are computed from the vehicle state and arm joint states using forward kinematics in the task implementation.
 
-Equipped with GPU-accelerated and customizable ray-casting based LiDAR and Camera sensors with depth and segmentation capabilities:
+### Policy actions (10 dimensions)
 
-![Depth Frames 1](./docs/gifs/camera_depth_frames.gif) ![Lidar Depth Frames 1](./docs/gifs/lidar_depth_frames.gif)
+| Action | Dimensions | Purpose |
+| --- | ---: | --- |
+| Desired vehicle acceleration | 3 | Translational motion reference |
+| Desired body rates | 3 | Roll, pitch, and yaw angular-rate references |
+| Desired yaw | 1 | Heading reference |
+| Desired arm joint positions | 3 | Manipulator configuration references |
+| **Total** | **10** | |
 
-![Seg Frames 1](./docs/gifs/camera_seg_frames.gif) ![Lidar Seg Frames 1](./docs/gifs/lidar_seg_frames.gif)
+The normalized policy actions are scaled to controller and joint-reference ranges in [`position_setpoint_task_sim2real_px4_arm_config.py`](aerial_gym/config/task_config/position_setpoint_task_sim2real_px4_arm_config.py). The first seven components drive the vehicle controller; the last three specify arm-joint position targets.
 
+### Reward design
 
-## Features
+The task's reward is centered on **end-effector position and orientation tracking**, with additional terms to encourage useful closed-loop behavior:
 
-- **Modular and Extendable Design** allowing users to easily create custom environments, robots, sensors, tasks, and controllers, and changing parameters programmatically on-the-go by modifying the [Simulation Components](https://ntnu-arl.github.io/aerial_gym_simulator/4_simulation_components).
-- **Rewritten from the Ground-Up** to offer very high control over each of the simulation components and capability to extensively [customize](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization) the simulator to your needs.
-- **High-Fidelity Physics Engine** leveraging [NVIDIA Isaac Gym](https://developer.nvidia.com/isaac-gym/download), which provides a high-fidelity physics engine for simulating multirotor platforms, with the possibility of adding support for custom physics engine backends and rendering pipelines.
-- **Parallelized Geometric Controllers** that reside on the GPU and provide parallelization for the [simultaneous control of (hundreds of) thousands of multirotor](https://ntnu-arl.github.io/aerial_gym_simulator/3_robots_and_controllers/#controllers) vehicles.
-- **Custom Rendering Framework** (based on [NVIDIA Warp](https://nvidia.github.io/warp/)) used to design [custom sensors](https://ntnu-arl.github.io/aerial_gym_simulator/8_sensors_and_rendering/#warp-sensors) and perform parallelized kernel-based operations.
-- **Modular and Extendable** allowing users to easily create [custom environments](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization/#custom-environments), [robots](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization/#custom-robots), [sensors](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization/#custom-sensors), [tasks](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization/#custom-tasks), and [controllers](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization/#custom-controllers).
-- **RL-based control and navigation policies** of your choice can be added for robot learning tasks. [Includes scripts to get started with training your own robots.](https://ntnu-arl.github.io/aerial_gym_simulator/6_rl_training).
+- Progress toward the end-effector target and reduced position error.
+- End-effector orientation alignment and low end-effector velocity near the target.
+- Vehicle uprightness and reduced yaw-rate motion.
+- Smoothness and reasonable magnitude of commanded vehicle actions.
 
+The task also provides episode termination and reset conditions. Reward terms and weights can be inspected in the task's [`compute_reward`](aerial_gym/task/position_setpoint_task_sim2real_px4_arm/position_setpoint_task_sim2real_px4_arm.py) implementation.
 
-> [!IMPORTANT] 
-> Support for [**Isaac Lab**](https://isaac-sim.github.io/IsaacLab/) and [**Isaac Sim**](https://developer.nvidia.com/isaac/sim) is currently under development. We anticipate releasing this feature in the near future.
+## Controller-in-the-Loop Training
 
+One focus of this repository is **training with the inner-loop controller in the simulation**, rather than adding a flight controller only when running a trained policy in another environment. This lets policy actions influence the simulated vehicle through a disturbance-compensating control law, so the next observations and rewards reflect that closed-loop response.
 
-Please refer to the paper detailing the previous version of our simulator to get insights into the motivation and the design principles involved in creating the Aerial Gym Simulator: [https://arxiv.org/abs/2305.16510](https://arxiv.org/abs/2305.16510) (link will be updated to reflect the newer version soon!).
+The principal control path is:
 
-## Why Aerial Gym Simulator?
-
-The Aerial Gym Simulator is designed to simulate thousands of MAVs simultaneously and comes equipped with both low and high-level controllers that are used on real-world systems. In addition, the new customized ray-casting allows for superfast rendering of the environment for tasks using depth and segmentation from the environment.
-
-The optimized code in this newer version allows training for motor-command policies for robot control in under a minute and vision-based navigation policies in under an hour. Extensive examples are provided to allow users to get started with training their own policies for their custom robots quickly.
-
-
-## Citing
-When referencing the Aerial Gym Simulator in your research, please cite the following paper
-
-```bibtex
-@ARTICLE{kulkarni2025aerial,
-  author={Kulkarni, Mihir and Rehberg, Welf and Alexis, Kostas},
-  journal={IEEE Robotics and Automation Letters}, 
-  title={Aerial Gym Simulator: A Framework for Highly Parallelized Simulation of Aerial Robots}, 
-  year={2025},
-  volume={10},
-  number={4},
-  pages={4093-4100},
-  keywords={Robots;Robot sensing systems;Rendering (computer graphics);Physics;Engines;Navigation;Training;Motors;Planning;Autonomous aerial vehicles;Aerial Systems: perception and autonomy;machine learning for robot control;reinforcement learning},
-  doi={10.1109/LRA.2025.3548507}}
+```text
+                  RL policy (10 actions)
+                           |
+            +--------------+--------------+
+            |                             |
+    Acceleration, body rates,          Arm joint
+       and yaw references           position targets
+            |                             |
+    Disturbance-estimating          Joint PD control
+       attitude controller                |
+            |                             |
+     Vehicle thrust/torque           Joint efforts
+            |                             |
+            +--------------+--------------+
+                           |
+                 Aerial Gym physics
+                           |
+               Updated vehicle + arm state
+                           |
+             End-effector observations/reward
+                           |
+                       RL policy
 ```
 
-If you use the reinforcement learning policy provided alongside this simulator for navigation tasks, please cite the following paper:
+The active aerial-manipulator task selects [`il_control.py`](aerial_gym/control/controllers/il_control.py). It converts acceleration and yaw references into collective thrust and desired attitude, computes geometric attitude/rate errors, estimates lumped rotational disturbance using filtered torque and angular-acceleration feedback, and outputs a vehicle wrench to the simulator. The manipulator's position targets are tracked by a joint PD effort controller.
 
-```bibtex
-@INPROCEEDINGS{kulkarni2024@dceRL,
-  author={Kulkarni, Mihir and Alexis, Kostas},
-  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)}, 
-  title={Reinforcement Learning for Collision-free Flight Exploiting Deep Collision Encoding}, 
-  year={2024},
-  volume={},
-  number={},
-  pages={15781-15788},
-  keywords={Image coding;Navigation;Supervised learning;Noise;Robot sensing systems;Encoding;Odometry},
-  doi={10.1109/ICRA57147.2024.10610287}}
+An alternative [`asmc.py`](aerial_gym/control/controllers/asmc.py) provides adaptive sliding-mode attitude control and is registered as `asmc_control`. These controllers implement the same underlying disturbance-estimating and adaptive sliding-mode control laws as their [C++ counterparts](https://github.com/1shit4/quadcopter_inner_loop_control), adapted for parallel simulation and controller-in-the-loop reinforcement learning in Aerial Gym.
 
+## Training and Experiment Files
+
+| Location | Purpose |
+| --- | --- |
+| [`aerial_gym/task/position_setpoint_task_sim2real_px4_arm/`](aerial_gym/task/position_setpoint_task_sim2real_px4_arm/) | Aerial-manipulator observations, actions, forward kinematics, rewards, and episode logic |
+| [`aerial_gym/config/task_config/position_setpoint_task_sim2real_px4_arm_config.py`](aerial_gym/config/task_config/position_setpoint_task_sim2real_px4_arm_config.py) | Task, action scaling, observation dimensions, and controller selection |
+| [`resources/robots/x500arm/`](resources/robots/x500arm/) and [`x500arm_config.py`](aerial_gym/config/robot_config/x500arm_config.py) | Robot model, three-joint configuration, and simulated physical properties |
+| [`aerial_gym/control/controllers/il_control.py`](aerial_gym/control/controllers/il_control.py) | Disturbance-estimating vehicle attitude/torque controller |
+| [`aerial_gym/control/controllers/asmc.py`](aerial_gym/control/controllers/asmc.py) | Adaptive sliding-mode controller variant |
+| [`aerial_gym/rl_training/rl_games/`](aerial_gym/rl_training/rl_games/) | PPO configuration and RL-Games training runner |
+| [`aerial_gym/task/position_setpoint_task_sim2real_px4/`](aerial_gym/task/position_setpoint_task_sim2real_px4/) | Related quadrotor-only task experiments |
+
+The supplied [`ppo_aerial_quad.yaml`](aerial_gym/rl_training/rl_games/ppo_aerial_quad.yaml) selects the aerial-manipulator task and configures PPO training through RL-Games. After installing the dependencies described in the [upstream Aerial Gym setup guide](https://ntnu-arl.github.io/aerial_gym_simulator/2_getting_started/), the corresponding training entry point is:
+
+```bash
+cd aerial_gym/rl_training/rl_games
+python runner.py --train \
+  --file ppo_aerial_quad.yaml \
+  --task position_setpoint_task_sim2real_px4_arm \
+  --num_envs 512 --headless True --use_warp False
 ```
 
-## Quick Links
-For your convenience, here are some quick links to the most important sections of the documentation:
+The environment count is adjustable for the available GPU. This is the repository's configured training path; successful execution depends on the required Isaac Gym, CUDA, PyTorch, and RL-Games installation.
 
-- [Installation](https://ntnu-arl.github.io/aerial_gym_simulator/2_getting_started/#installation)
-- [Robots and Controllers](https://ntnu-arl.github.io/aerial_gym_simulator/3_robots_and_controllers)
-- [Sensors and Rendering Capabilities](https://ntnu-arl.github.io/aerial_gym_simulator/8_sensors_and_rendering)
-- [RL Training](https://ntnu-arl.github.io/aerial_gym_simulator/6_rl_training)
-- [Simulation Components](https://ntnu-arl.github.io/aerial_gym_simulator/4_simulation_components)
-- [Customization](https://ntnu-arl.github.io/aerial_gym_simulator/5_customization)
-- [FAQs and Troubleshooting](https://ntnu-arl.github.io/aerial_gym_simulator/7_FAQ_and_troubleshooting)
+## Related Repositories
 
+- **[Aerial Manipulation — Project Overview](https://github.com/1shit4/aerial-manipulation-rl-control):** research objective and links to the full set of experimental implementations.
+- **[RLquadcopter_aerial_gym](https://github.com/1shit4/RLquadcopter_aerial_gym):** separate ROS 2/PX4–Gazebo policy-inference and tracking experiments.
+- **[quadcopter_inner_loop_control](https://github.com/1shit4/quadcopter_inner_loop_control):** related disturbance-compensating controllers implemented in C++ for PX4/Gazebo testing.
+- **[arm_control_ws](https://github.com/1shit4/arm_control_ws):** aerial-manipulator modeling and arm-joint control in ROS 2/Gazebo.
 
+## Upstream Framework
 
-## Contact
+This is a research fork of **[NTNU Autonomous Robots Lab's Aerial Gym Simulator](https://github.com/ntnu-arl/aerial_gym_simulator)**, not an independently developed simulator. Aerial Gym provides the underlying Isaac Gym environment, GPU-parallel simulation infrastructure, robot abstractions, and baseline control/training facilities. The original project's [documentation](https://ntnu-arl.github.io/aerial_gym_simulator/) and [BSD-3-Clause license](LICENSE) remain applicable.
 
-Mihir Kulkarni  &nbsp;&nbsp;&nbsp; [Email](mailto:mihirk284@gmail.com) &nbsp; [GitHub](https://github.com/mihirk284) &nbsp; [LinkedIn](https://www.linkedin.com/in/mihir-kulkarni-6070b6135/) &nbsp; [X (formerly Twitter)](https://twitter.com/mihirk284)
-
-Welf Rehberg &nbsp;&nbsp;&nbsp;&nbsp; [Email](mailto:welf.rehberg@ntnu.no) &nbsp; [GitHub](https://github.com/Zwoelf12) &nbsp; [LinkedIn](https://www.linkedin.com/in/welfrehberg/)
-
-Theodor J. L. Forgaard &nbsp;&nbsp;&nbsp; [Email](mailto:tjforgaa@stud.ntnu.no) &nbsp; [GitHb](https://github.com/tforgaard) &nbsp; [LinkedIn](https://www.linkedin.com/in/theodor-johannes-line-forgaard-665b5311a/)
-
-Kostas Alexis &nbsp;&nbsp;&nbsp;&nbsp; [Email](mailto:konstantinos.alexis@ntnu.no) &nbsp;  [GitHub](https://github.com/kostas-alexis) &nbsp; 
- [LinkedIn](https://www.linkedin.com/in/kostas-alexis-67713918/) &nbsp; [X (formerly Twitter)](https://twitter.com/arlteam)
-
-This work is done at the [Autonomous Robots Lab](https://www.autonomousrobotslab.com), [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.no). For more information, visit our [Website](https://www.autonomousrobotslab.com/).
-
-
-## Acknowledgements
-This material was supported by RESNAV (AFOSR Award No. FA8655-21-1-7033) and SPEAR (Horizon Europe Grant Agreement No. 101119774).
-
-This repository utilizes some of the code and helper scripts from [https://github.com/leggedrobotics/legged_gym](https://github.com/leggedrobotics/legged_gym) and [IsaacGymEnvs](https://github.com/isaac-sim/IsaacGymEnvs).
-
-
-
-## FAQs and Troubleshooting 
-
-Please refer to our [website](https://ntnu-arl.github.io/aerial_gym_simulator/7_FAQ_and_troubleshooting/) or to the [Issues](https://github.com/ntnu-arl/aerial_gym_simulator/issues) section in the GitHub repository for more information.
+*Research conducted collaboratively at the Robotics Research Center, IIIT Hyderabad.*
