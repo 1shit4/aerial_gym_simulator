@@ -2,7 +2,7 @@
 
 **Aerial Gym extensions for coordinated quadrotor–arm control, end-effector pose tracking, and controller-in-the-loop reinforcement learning.**
 
-This repository is part of the [Robust Goal-Directed Aerial Manipulation project](https://github.com/1shit4/aerial-manipulation-rl-control). The larger research objective is to move an aerial manipulator's end effector toward a target pose while maintaining stable flight despite the coupled motion of the vehicle and arm. This repository implements the **RL simulation and training components** of that investigation.
+This repository is part of the [Robust Goal-Directed Aerial Manipulation project](https://github.com/ishita-chaudhary/aerial-manipulation-rl-control). The larger research objective is to move an aerial manipulator's end effector toward a target pose while maintaining stable flight despite the coupled motion of the vehicle and arm. This repository implements the **RL simulation and training components** of that investigation.
 
 The code builds on the open-source [Aerial Gym Simulator](https://github.com/ntnu-arl/aerial_gym_simulator), developed at NTNU. The underlying GPU simulation, environment infrastructure, and general-purpose controllers are from Aerial Gym; the work documented here concerns the **X500 aerial-manipulator setup, custom learning tasks, PX4-oriented policy interfaces, and disturbance-compensating controller integrations**.
 
@@ -81,7 +81,7 @@ The principal control path is:
 
 The active aerial-manipulator task selects [`il_control.py`](aerial_gym/control/controllers/il_control.py). It converts acceleration and yaw references into collective thrust and desired attitude, computes geometric attitude/rate errors, estimates lumped rotational disturbance using filtered torque and angular-acceleration feedback, and outputs a vehicle wrench to the simulator. The manipulator's position targets are tracked by a joint PD effort controller.
 
-An alternative [`asmc.py`](aerial_gym/control/controllers/asmc.py) provides adaptive sliding-mode attitude control and is registered as `asmc_control`. These controllers implement the same underlying disturbance-estimating and adaptive sliding-mode control laws as their [C++ counterparts](https://github.com/1shit4/quadcopter_inner_loop_control), adapted for parallel simulation and controller-in-the-loop reinforcement learning in Aerial Gym.
+An alternative [`asmc.py`](aerial_gym/control/controllers/asmc.py) provides adaptive sliding-mode attitude control and is registered as `asmc_control`. These controllers implement the same underlying disturbance-estimating and adaptive sliding-mode control laws as their [C++ counterparts](https://github.com/ishita-chaudhary/quadcopter_inner_loop_control), adapted for parallel simulation and controller-in-the-loop reinforcement learning in Aerial Gym.
 
 ## Training and Experiment Files
 
@@ -109,10 +109,10 @@ The environment count is adjustable for the available GPU. This is the repositor
 
 ## Related Repositories
 
-- **[Aerial Manipulation — Project Overview](https://github.com/1shit4/aerial-manipulation-rl-control):** research objective and links to the full set of experimental implementations.
-- **[RLquadcopter_aerial_gym](https://github.com/1shit4/RLquadcopter_aerial_gym):** separate ROS 2/PX4–Gazebo policy-inference and tracking experiments.
-- **[quadcopter_inner_loop_control](https://github.com/1shit4/quadcopter_inner_loop_control):** related disturbance-compensating controllers implemented in C++ for PX4/Gazebo testing.
-- **[arm_control_ws](https://github.com/1shit4/arm_control_ws):** aerial-manipulator modeling and arm-joint control in ROS 2/Gazebo.
+- **[Aerial Manipulation — Project Overview](https://github.com/ishita-chaudhary/aerial-manipulation-rl-control):** research objective and links to the full set of experimental implementations.
+- **[RLquadcopter_aerial_gym](https://github.com/ishita-chaudhary/RLquadcopter_aerial_gym):** separate ROS 2/PX4–Gazebo policy-inference and tracking experiments.
+- **[quadcopter_inner_loop_control](https://github.com/ishita-chaudhary/quadcopter_inner_loop_control):** related disturbance-compensating controllers implemented in C++ for PX4/Gazebo testing.
+- **[arm_control_ws](https://github.com/ishita-chaudhary/arm_control_ws):** aerial-manipulator modeling and arm-joint control in ROS 2/Gazebo.
 
 ## Upstream Framework
 
